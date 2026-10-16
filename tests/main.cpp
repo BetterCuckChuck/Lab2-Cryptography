@@ -5,17 +5,24 @@
 #include <iostream>
 #include <string>
 
+/*
+ * Known-answer test runner for the AES primitive and SP 800-38A/SP 800-38C
+ * mode implementations. Expected values come from the NIST publications.
+ */
+
 namespace {
 using Byte = AES::Byte;
 using Bytes = lab::Bytes;
 
 Bytes bytes(std::initializer_list<int> values) {
+    // Convert readable integer literals into the project's byte representation.
     Bytes result;
     for (int value : values) result.push_back(static_cast<Byte>(value));
     return result;
 }
 
 bool check(const std::string& name, const Bytes& actual, const Bytes& expected) {
+    // Keep output compatible with the simple PASS/FAIL test format.
     if (actual != expected) {
         std::cerr << "FAIL " << name << '\n';
         return false;

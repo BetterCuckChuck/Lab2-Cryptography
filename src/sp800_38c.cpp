@@ -2,9 +2,18 @@
 #include <algorithm>
 #include <limits>
 
+/*
+ * NIST SP 800-38C CCM mode for authenticated encryption.
+ *
+ * CCM combines CBC-MAC authentication with CTR-mode confidentiality. The
+ * implementation uses the local AES primitive and supports associated data,
+ * variable nonce lengths, and the standard CCM authentication tag lengths.
+ */
+
 namespace lab {
 namespace {
 
+// Validate the CCM nonce, tag, and plaintext length constraints.
 void check_parameters(const Bytes& plaintext, const Bytes& nonce,
                       std::size_t tag_length) {
     if (nonce.size() < 7 || nonce.size() > 13) {
@@ -25,6 +34,7 @@ void check_parameters(const Bytes& plaintext, const Bytes& nonce,
     }
 }
 
+// Construct B_i, the CCM counter block for the supplied counter value.
 Block counter_block(const Bytes& nonce, std::uint64_t counter) {
     const std::size_t q = 15 - nonce.size();
     Block result{};
@@ -37,12 +47,14 @@ Block counter_block(const Bytes& nonce, std::uint64_t counter) {
     return result;
 }
 
+// Append an integer in the big-endian format used by CCM.
 void append_length(Bytes& output, std::size_t length, std::size_t width) {
     for (std::size_t i = 0; i < width; ++i) {
         output.push_back(static_cast<AES::Byte>(length >> (8 * (width - 1 - i))));
     }
 }
 
+// Encode associated data with its CCM length prefix and block padding.
 Bytes format_aad(const Bytes& aad) {
     if (aad.empty()) return {};
     Bytes result;
@@ -61,6 +73,7 @@ Bytes format_aad(const Bytes& aad) {
     return result;
 }
 
+// Compute the CBC-MAC value over B_0, encoded associated data, and plaintext.
 Block cbc_mac(const AES& aes, const Bytes& plaintext, const Bytes& nonce,
               const Bytes& aad, std::size_t tag_length) {
     const std::size_t q = 15 - nonce.size();
@@ -82,6 +95,8 @@ Block cbc_mac(const AES& aes, const Bytes& plaintext, const Bytes& nonce,
     return mac;
 }
 
+// Encrypt or decrypt data with the CCM CTR keystream. Counter 0 is reserved
+// for masking the authentication tag, so data processing starts at counter 1.
 Bytes crypt(const AES& aes, const Bytes& input, const Bytes& nonce) {
     Bytes output;
     for (std::size_t offset = 0, counter = 1; offset < input.size();
@@ -97,6 +112,7 @@ Bytes crypt(const AES& aes, const Bytes& input, const Bytes& nonce) {
 
 }
 
+// Encrypt plaintext and return optionally prefixed nonce, ciphertext, and tag.
 Bytes ccm_encrypt(const AES& aes, const Bytes& plaintext, const Bytes& nonce,
                   const Bytes& aad, std::size_t tag_length, bool prepend_nonce) {
     check_parameters(plaintext, nonce, tag_length);
@@ -112,6 +128,8 @@ Bytes ccm_encrypt(const AES& aes, const Bytes& plaintext, const Bytes& nonce,
     return output;
 }
 
+// Decrypt ciphertext and verify its authentication tag before returning
+// plaintext.
 Bytes ccm_decrypt(const AES& aes, const Bytes& ciphertext_and_tag,
                   const Bytes& nonce, const Bytes& aad,
                   std::size_t tag_length, bool has_nonce,

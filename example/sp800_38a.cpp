@@ -1,7 +1,16 @@
 #include "sp800_38a.hpp"
 #include <algorithm>
 
+/*
+ * Example implementation of the NIST SP 800-38A AES confidentiality modes.
+ *
+ * This file mirrors the library implementation and is kept as a readable
+ * reference for ECB, CBC, CFB, OFB, and CTR processing.
+ */
+
 namespace lab {
+
+// ECB encrypts each input block independently.
 Bytes ecb_encrypt(const AES& aes, const Bytes& input, bool padding) {
     const Bytes data = padding ? pad(input) : input;
     check_aligned(data);
@@ -12,6 +21,7 @@ Bytes ecb_encrypt(const AES& aes, const Bytes& input, bool padding) {
     return output;
 }
 
+// ECB decrypts each input block independently.
 Bytes ecb_decrypt(const AES& aes, const Bytes& input, bool padding) {
     check_aligned(input);
     Bytes output;
@@ -21,6 +31,7 @@ Bytes ecb_decrypt(const AES& aes, const Bytes& input, bool padding) {
     return padding ? unpad(output) : output;
 }
 
+// CBC chains each encrypted block into the next block's input.
 Bytes cbc_encrypt(const AES& aes, const Bytes& input, const Bytes& iv, bool padding) {
     check_iv(iv);
     const Bytes data = padding ? pad(input) : input;
@@ -34,6 +45,7 @@ Bytes cbc_encrypt(const AES& aes, const Bytes& input, const Bytes& iv, bool padd
     return output;
 }
 
+// CBC decryption uses the previous ciphertext block or the IV as feedback.
 Bytes cbc_decrypt(const AES& aes, const Bytes& input, const Bytes& iv, bool padding) {
     check_iv(iv);
     check_aligned(input);
@@ -47,6 +59,7 @@ Bytes cbc_decrypt(const AES& aes, const Bytes& input, const Bytes& iv, bool padd
     return padding ? unpad(output) : output;
 }
 
+// Shared CFB implementation for encryption and decryption.
 static Bytes cfb(const AES& aes, const Bytes& input, const Bytes& iv,
                  int segmentBits, bool encrypt) {
     check_iv(iv);
@@ -69,14 +82,17 @@ static Bytes cfb(const AES& aes, const Bytes& input, const Bytes& iv,
     return output;
 }
 
+// CFB encryption with a byte-aligned segment size.
 Bytes cfb_encrypt(const AES& aes, const Bytes& input, const Bytes& iv, int bits) {
     return cfb(aes, input, iv, bits, true);
 }
 
+// CFB decryption with a byte-aligned segment size.
 Bytes cfb_decrypt(const AES& aes, const Bytes& input, const Bytes& iv, int bits) {
     return cfb(aes, input, iv, bits, false);
 }
 
+// OFB generates a keystream by repeatedly encrypting the feedback block.
 Bytes ofb_crypt(const AES& aes, const Bytes& input, const Bytes& iv) {
     check_iv(iv);
     Block feedback = block(iv, 0);
@@ -89,6 +105,7 @@ Bytes ofb_crypt(const AES& aes, const Bytes& input, const Bytes& iv) {
     return output;
 }
 
+// CTR encrypts or decrypts by XORing with AES-encrypted counter blocks.
 Bytes ctr_crypt(const AES& aes, const Bytes& input, const Bytes& initialCounter) {
     check_iv(initialCounter);
     Block counter = block(initialCounter, 0);
