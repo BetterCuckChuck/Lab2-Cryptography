@@ -1,0 +1,26 @@
+Task: This is a crypto project, you have to code c++ to implement AES algorithm, with 5 mode of operations in NIST 800-38A.
+
+Detail:
+There is the correct implementation of the AES and the mode of operation in /python_src, those will be translate block-by-block to c++.
+There is a CMakeLists.txt file that details exactly what files should be made to cmake them.
+The /example folder contains specification for aes.hpp and sp800_38a.hpp, write the aes.cpp file exactly based on that, sp800_38a.cpp should be reformatted to clean the code, as well as to be implemented any missing feature.
+Any missing file from CMakeLists should be created following exactly the same code format as the available files.
+The aes_test should be placeholder for now.
+
+After building everything, the cmake run should be as follow:
+
+cmake -S . -B build-gcc-attn -G "MinGW Makefiles" ^
+  -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe ^
+  -DCMAKE_BUILD_TYPE=Release ^
+  -DAES_BUILD_EXECUTABLE=ON ^
+  -DAES_LIBRARY_TYPE=BOTH
+ 
+cmake --build build-gcc-attn --parallel
+ctest --test-dir build-gcc-attn --output-on-failure
+
+Requirement:
+- No external cryptographic libraries allowed
+- C++ STL is permitted
+- All cryptographic primitives must be implemented manually.
+- Implementation according to NIST.FIPS.197 AES standard.
+- Code is written clean.
