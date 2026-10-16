@@ -1,0 +1,3 @@
+Write c++ code for sp800_38c, which specifies The CCM Mode for Authentication and Confidentiality.
+THe format/layout of the code should be based on sp800_38a.
+Add sp800_38c to necessary build as well. 

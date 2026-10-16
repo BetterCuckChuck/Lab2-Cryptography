@@ -4,6 +4,16 @@
 #include <sstream>
 #include <stdexcept>
 
+/*
+ * AES block cipher primitive for AES-128, AES-192, and AES-256.
+ *
+ * This implementation follows the teaching-oriented structure of AES.py:
+ * the AES state is stored as state[row][column], and input bytes are mapped
+ * into the state column by column. Modes of operation are implemented in the
+ * SP 800-38A and SP 800-38C source files.
+ */
+
+// AES constants: the substitution boxes and round constants used by FIPS 197.
 const std::array<AES::Byte, 256> AES::S_BOX{
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -42,6 +52,7 @@ const std::array<AES::Byte, 256> AES::INV_S_BOX{
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 };
 
+// Round constants for the AES key expansion.
 const std::array<AES::Word, 10> AES::RCON{{
     {0x01, 0x00, 0x00, 0x00}, {0x02, 0x00, 0x00, 0x00},
     {0x04, 0x00, 0x00, 0x00}, {0x08, 0x00, 0x00, 0x00},
@@ -51,6 +62,7 @@ const std::array<AES::Word, 10> AES::RCON{{
 }};
 
 AES::AES(const std::vector<Byte>& key, int keyLengthBits) : key_(key) {
+    // Infer the key length from the supplied key when it is not specified.
     if (keyLengthBits == 0) keyLengthBits = static_cast<int>(key_.size() * 8);
     if (keyLengthBits != 128 && keyLengthBits != 192 && keyLengthBits != 256) {
         throw std::invalid_argument("Invalid AES key length. Use 128, 192, or 256 bits.");
@@ -67,6 +79,7 @@ AES::AES(const std::vector<Byte>& key, int keyLengthBits) : key_(key) {
 }
 
 AES::Byte AES::gmul(Byte a, Byte b) {
+    // Galois Field multiplication in GF(2^8), using the AES polynomial.
     Byte product = 0;
     for (int i = 0; i < 8; ++i) {
         if (b & 1) product ^= a;
@@ -79,6 +92,7 @@ AES::Byte AES::gmul(Byte a, Byte b) {
 }
 
 AES::State AES::bytesToState(const Block& block) {
+    // Map a 16-byte block to state[row][column] in column-major order.
     State state{};
     for (int row = 0; row < 4; ++row)
         for (int column = 0; column < 4; ++column)
@@ -87,6 +101,7 @@ AES::State AES::bytesToState(const Block& block) {
 }
 
 AES::Block AES::stateToBytes(const State& state) {
+    // Serialize state[row][column] back to bytes in column-major order.
     Block block{};
     std::size_t index = 0;
     for (int column = 0; column < 4; ++column)
@@ -96,30 +111,35 @@ AES::Block AES::stateToBytes(const State& state) {
 }
 
 void AES::subBytes(State& state) {
+    // Substitute every state byte using the AES S-box.
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             state[i][j] = S_BOX[state[i][j]];
 }
 
 void AES::invSubBytes(State& state) {
+    // Substitute every state byte using the inverse AES S-box.
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             state[i][j] = INV_S_BOX[state[i][j]];
 }
 
 void AES::shiftRows(State& state) {
+    // Cyclically shift rows left by their row index.
     state[1] = State::value_type{state[1][1], state[1][2], state[1][3], state[1][0]};
     state[2] = State::value_type{state[2][2], state[2][3], state[2][0], state[2][1]};
     state[3] = State::value_type{state[3][3], state[3][0], state[3][1], state[3][2]};
 }
 
 void AES::invShiftRows(State& state) {
+    // Cyclically shift rows right by their row index.
     state[1] = State::value_type{state[1][3], state[1][0], state[1][1], state[1][2]};
     state[2] = State::value_type{state[2][2], state[2][3], state[2][0], state[2][1]};
     state[3] = State::value_type{state[3][1], state[3][2], state[3][3], state[3][0]};
 }
 
 void AES::mixColumns(State& state) {
+    // Mix each state column using the AES transformation matrix.
     for (int i = 0; i < 4; ++i) {
         const Byte a0 = state[0][i], a1 = state[1][i], a2 = state[2][i], a3 = state[3][i];
         state[0][i] = gmul(0x02, a0) ^ gmul(0x03, a1) ^ a2 ^ a3;
@@ -130,6 +150,7 @@ void AES::mixColumns(State& state) {
 }
 
 void AES::invMixColumns(State& state) {
+    // Apply the inverse MixColumns transformation during decryption.
     for (int i = 0; i < 4; ++i) {
         const Byte a0 = state[0][i], a1 = state[1][i], a2 = state[2][i], a3 = state[3][i];
         state[0][i] = gmul(0x0e, a0) ^ gmul(0x0b, a1) ^ gmul(0x0d, a2) ^ gmul(0x09, a3);
@@ -140,27 +161,38 @@ void AES::invMixColumns(State& state) {
 }
 
 void AES::addRoundKey(State& state, int round) const {
+    // XOR the state with the four expanded words for this round.
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             state[j][i] ^= roundKeys_[round * 4 + i][j];
 }
 
 AES::Word AES::rotWord(Word word) {
+    // ROTWORD([a0,a1,a2,a3]) = [a1,a2,a3,a0].
     return Word{word[1], word[2], word[3], word[0]};
 }
 
 AES::Word AES::subWord(Word word) {
+    // SUBWORD([a0,...,a3]) = [SBOX(a0),...,SBOX(a3)].
     for (auto& byte : word) byte = S_BOX[byte];
     return word;
 }
 
 std::vector<AES::Word> AES::keyExpansion(const std::vector<Byte>& key) const {
+    /*
+     * Generate the expanded key words:
+     *   AES-128: Nk = 4, 44 words, 10 rounds
+     *   AES-192: Nk = 6, 52 words, 12 rounds
+     *   AES-256: Nk = 8, 60 words, 14 rounds
+     */
     const int keyWords = keyLength_ / 32;
     const int totalWords = 4 * (numRounds_ + 1);
     std::vector<Word> roundKeys;
+    // The first Nk words come directly from the original key.
     for (std::size_t i = 0; i < key.size(); i += 4)
         roundKeys.push_back(Word{key[i], key[i + 1], key[i + 2], key[i + 3]});
 
+    // Extend the original words until all round keys have been generated.
     for (int i = keyWords; i < totalWords; ++i) {
         Word temp = roundKeys[i - 1];
         if (i % keyWords == 0) {
@@ -178,9 +210,13 @@ std::vector<AES::Word> AES::keyExpansion(const std::vector<Byte>& key) const {
 }
 
 AES::Block AES::encrypt(const Block& data, bool) const {
+    // Encrypt exactly one 16-byte block.
     State state = bytesToState(data);
+    // Initial AddRoundKey.
     addRoundKey(state, 0);
+    // Nr - 1 full rounds: SubBytes, ShiftRows, MixColumns, AddRoundKey.
     for (int round = 1; round < numRounds_; ++round) {
+        // Final round: no MixColumns.
         subBytes(state);
         shiftRows(state);
         mixColumns(state);
@@ -193,9 +229,13 @@ AES::Block AES::encrypt(const Block& data, bool) const {
 }
 
 AES::Block AES::decrypt(const Block& ciphertext, bool) const {
+    // Decrypt exactly one 16-byte block.
     State state = bytesToState(ciphertext);
+    // Initial inverse round starts with AddRoundKey(Nr).
     addRoundKey(state, numRounds_);
+    // Nr - 1 inverse full rounds.
     for (int round = numRounds_ - 1; round > 0; --round) {
+        // Final inverse round: no InvMixColumns.
         invShiftRows(state);
         invSubBytes(state);
         addRoundKey(state, round);

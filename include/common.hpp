@@ -62,4 +62,13 @@ inline Block xorblock(const Block& left, const Block& right) {
     }
     return result;
 }
+
+inline bool constant_time_equal(const Bytes& left, const Bytes& right) {
+    if (left.size() != right.size()) return false;
+    std::uint8_t difference = 0;
+    for (std::size_t i = 0; i < left.size(); ++i) {
+        difference = static_cast<std::uint8_t>(difference | (left[i] ^ right[i]));
+    }
+    return difference == 0;
+}
 }

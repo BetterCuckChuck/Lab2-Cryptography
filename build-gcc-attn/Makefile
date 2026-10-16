@@ -627,6 +627,33 @@ src/sp800_38a.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_shared.dir\build.make CMakeFiles/aes_modes_shared.dir/src/sp800_38a.cpp.s
 .PHONY : src/sp800_38a.cpp.s
 
+src/sp800_38c.obj: src/sp800_38c.cpp.obj
+.PHONY : src/sp800_38c.obj
+
+# target to build an object file
+src/sp800_38c.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_static.dir\build.make CMakeFiles/aes_modes_static.dir/src/sp800_38c.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_shared.dir\build.make CMakeFiles/aes_modes_shared.dir/src/sp800_38c.cpp.obj
+.PHONY : src/sp800_38c.cpp.obj
+
+src/sp800_38c.i: src/sp800_38c.cpp.i
+.PHONY : src/sp800_38c.i
+
+# target to preprocess a source file
+src/sp800_38c.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_static.dir\build.make CMakeFiles/aes_modes_static.dir/src/sp800_38c.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_shared.dir\build.make CMakeFiles/aes_modes_shared.dir/src/sp800_38c.cpp.i
+.PHONY : src/sp800_38c.cpp.i
+
+src/sp800_38c.s: src/sp800_38c.cpp.s
+.PHONY : src/sp800_38c.s
+
+# target to generate assembly for a file
+src/sp800_38c.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_static.dir\build.make CMakeFiles/aes_modes_static.dir/src/sp800_38c.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\aes_modes_shared.dir\build.make CMakeFiles/aes_modes_shared.dir/src/sp800_38c.cpp.s
+.PHONY : src/sp800_38c.cpp.s
+
 tests/main.obj: tests/main.cpp.obj
 .PHONY : tests/main.obj
 
@@ -701,6 +728,9 @@ help:
 	@echo ... src/sp800_38a.obj
 	@echo ... src/sp800_38a.i
 	@echo ... src/sp800_38a.s
+	@echo ... src/sp800_38c.obj
+	@echo ... src/sp800_38c.i
+	@echo ... src/sp800_38c.s
 	@echo ... tests/main.obj
 	@echo ... tests/main.i
 	@echo ... tests/main.s

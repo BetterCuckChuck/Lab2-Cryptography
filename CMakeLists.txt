@@ -23,11 +23,13 @@ endif()
 set(AES_SOURCES
   src/aes.cpp
   src/sp800_38a.cpp
+  src/sp800_38c.cpp
 )
 set(AES_HEADERS
   include/aes.hpp
   include/common.hpp
   include/sp800_38a.hpp
+  include/sp800_38c.hpp
 )
 
 # Compiler selection is made at CMake configure time, e.g.

@@ -60,6 +60,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
     "D:/workspace/lab2/include/aes.hpp"
     "D:/workspace/lab2/include/common.hpp"
     "D:/workspace/lab2/include/sp800_38a.hpp"
+    "D:/workspace/lab2/include/sp800_38c.hpp"
     )
 endif()
 
